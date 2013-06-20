@@ -8,11 +8,15 @@ var server = net.createServer(function(client) { //'connection' listener
   });
   client.write('hello\r\n');
   client.on('data',function(data){
-    var request = JSON.parse(data);
-    if (request != undefined) {
-      if (requester[Object.keys(request)[0]] != undefined) {
-        client.write(requester[Object.keys(request)[0]](request[Object.keys(request)[0]]));
+    try {
+      var request = JSON.parse(data);
+      if (request != undefined) {
+        if (requester[Object.keys(request)[0]] != undefined) {
+          client.write(requester[Object.keys(request)[0]](request[Object.keys(request)[0]]));
+        }
       }
+    } catch (e) {
+      console.log(e);
     }
   });
 });
