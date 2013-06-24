@@ -1,27 +1,65 @@
 var net = require('net');
-var requester = new (require('./requester'))();
+var testStore = new (require('./Store'))("test");
+var logger = new (require('./Logger'))();
+
+var stores = new Object();
+stores.test = testStore;
+testStore.on("Log", logger.log);
 
 var server = net.createServer(function(client) { //'connection' listener
-  console.log('server connected');
+  
+  client._requestedQuery = "";
+  logger.log('server connected');
+  
+  function handle(data) {
+    client._requestedQuery += data.toString();
+    var queries = client._requestedQuery.split("\n");
+    
+    for (i in queries) {
+      if (queries[i] != '') {
+        try {
+          var request = JSON.parse(queries[i]);
+          execute(request);
+          console.log("Popping " + queries[i]);
+          queries.pop(queries[i]); 
+          console.log(queries);
+        }  catch (e) {
+          logger.log("Handle error: " + e + " data: " + queries[i]);
+        }
+      } else {
+        queries.pop(queries[i]);
+      }
+    }
+    client._requestedQuery = queries.join("\n"); 
+    console.log("We have" + client._requestedQuery);
+  }
+
+  function execute(request){
+      try {
+        if (request != undefined) {
+          var store = Object.keys(request)[0];
+          if (store != undefined && stores[store] != undefined) {
+                client.write(String(stores[store].execute(request[store])));
+          } else {
+            logger.log("Store " + store + " doesn't exist");
+          }
+        } else {
+          logger.log("Wrong request");
+        }
+      } catch (e) {
+        logger.log("client on data error: " + e + " request: " + request);
+      }
+    }
+
+  
   client.on('end', function() {
-    console.log('server disconnected');
+    logger.log('server disconnected');
   });
   client.write('hello\r\n');
-  client.on('data',function(data){
-    try {
-      var request = JSON.parse(data);
-      if (request != undefined) {
-        if (requester[Object.keys(request)[0]] != undefined) {
-          client.write(requester[Object.keys(request)[0]](request[Object.keys(request)[0]]));
-        }
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  client.on('data', handle);
 });
 server.listen(7907, function() { //'listening' listener
-  console.log('server bound');
+  logger.log('server bound');
 });
 
 
