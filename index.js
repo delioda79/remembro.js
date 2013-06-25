@@ -20,18 +20,16 @@ var server = net.createServer(function(client) { //'connection' listener
         try {
           var request = JSON.parse(queries[i]);
           execute(request);
-          console.log("Popping " + queries[i]);
-          queries.pop(queries[i]); 
-          console.log(queries);
+          queries.splice(i,1); 
         }  catch (e) {
           logger.log("Handle error: " + e + " data: " + queries[i]);
         }
       } else {
-        queries.pop(queries[i]);
+        queries.splice(i,1); 
       }
     }
     client._requestedQuery = queries.join("\n"); 
-    console.log("We have" + client._requestedQuery);
+    //console.log("We have" + client._requestedQuery);
   }
 
   function execute(request){

@@ -25,11 +25,23 @@ Collection.prototype.find = function(data) {
   if (typeof data == "number") {
     return this._data[parseInt(data)];
   } else {
-    var results = new Array();
-    var i;
-    for (i in this._data) {
-      if (this._match(this._data[i],data)) {
-        results.push(this._data[i]);
+    if (data instanceof Array) {
+      var results = new Array();
+      for (var i in this._data) {
+        for (var j in data) {
+          if (this._match(this._data[i],data[j])) {
+            results.push(this._data[i]);
+            break;
+          }
+        }
+      }
+    } else {
+      var results = new Array();
+      var i;
+      for (i in this._data) {
+        if (this._match(this._data[i],data)) {
+          results.push(this._data[i]);
+        }
       }
     }
     return JSON.stringify(results);
@@ -38,6 +50,7 @@ Collection.prototype.find = function(data) {
 }
 
 Collection.prototype.insert = function(data) {
+  //console.log("Inserting " + JSON.stringify(data));
   this._data.push(data);
   return true;
 }
@@ -51,6 +64,15 @@ Collection.prototype._match = function (element,query) {
     if(element[i] != undefined) {
       //@toDo
       if (query[i] instanceof Array) {
+        var orResult = false;
+        for (var j in query[i]) {
+          if (this._match(element[i],query[i][j])) {
+            //Is an or, so one match is enough
+            return true;
+          }
+        }
+        //No match, hence is false
+        return orResult;
         //Still to decide how to search
       } else {
         //Recoursively search
@@ -62,6 +84,8 @@ Collection.prototype._match = function (element,query) {
         } else {
           if (element[i] != query[i]) {
             return false;
+          } else {
+            return true;
           }
         }
       }
