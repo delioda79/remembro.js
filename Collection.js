@@ -55,6 +55,10 @@ Collection.prototype.insert = function(data) {
   return true;
 }
 
+Collection.prototype.count = function(data) {
+  return this._data.length;
+}
+
 
 Collection.prototype._match = function (element,query) {
   var result = true;
