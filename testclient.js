@@ -1,15 +1,19 @@
 var net = require('net');
-var client = net.connect(7907, function() { //'connect' listener
-  console.log('client connected');
-  client.write('{"test" : {"createCollection" : { "name" : "firstCollection"}}}\n');
-  message = "";
-  for (i = 0; i <2000 ; i++) {
-    message += '{"test" : { "firstCollection" : {"insert" : {"bu'+i+'" : "a'+i+'", "ba" : "e"}}}}\n';
-  }
-  client.write(message);
-  client.write('{"test" : { "firstCollection" : {"find" : [{"bu1998" : "a1998"},{"bu4" : "a4"}]}}}\n');
-  //client.write('{"test" : { "firstCollection" : {"find" : {"bu423" : "a423"}}}}\n');
-});
+var client = new (require('./Client'))();
+
+
+/*client.send('{"test" : {"createCollection" : { "name" : "firstCollection"}}}\n');
+for (i = 0; i <20000 ; i++) {
+  message = '{"test" : { "firstCollection" : {"insert" : {"bu'+i+'" : "a'+i+'", "ba" : "e"}}}}\n';
+  client.send(message);
+}*/
+  //console.log("Done");
+  //client.write('{"test" : { "firstCollection" : {"find" : [{"bu10000" : ["a1998","a10000"]},{"bu4" : "a4"}]}}}\n');
+  //client.write('{"test" : { "firstCollection" : {"find" : {"bu1905" : "a1905"}}}}\n');
+  client.send('{"test" : { "firstCollection" : {"find" : {"bu11" : "a11"}}}}');
+  //client.send('{"test" : { "firstCollection" : {"count" : ""}}}\n');
+
+
 client.on('data', function(data) {
   if (data != 'true' ) {
     console.log(data.toString());
