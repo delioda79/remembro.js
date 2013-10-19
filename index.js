@@ -1,35 +1,29 @@
 var net = require('net');
 var testStore = new (require('./Store'))("test");
 var logger = new (require('./Logger'))();
-
+var messNUm = 0;
 var stores = new Object();
 stores.test = testStore;
 testStore.on("Log", logger.log);
+var clients = new Array();
 
 var server = net.createServer(function(client) { //'connection' listener
-  
-  client._requestedQuery = "";
+  clients.push(client);
+  var requestHandler = new (require('./RequestHandler'))();
   logger.log('server connected');
+  logger.log("We have " + clients.length + " active clients");
   
-  function handle(data) {
-    client._requestedQuery += data.toString();
-    var queries = client._requestedQuery.split("\n");
-    
-    for (i in queries) {
-      if (queries[i] != '') {
-        try {
-          var request = JSON.parse(queries[i]);
-          execute(request);
-          queries.splice(i,1); 
-        }  catch (e) {
-          logger.log("Handle error: " + e + " data: " + queries[i]);
-        }
-      } else {
-        queries.splice(i,1); 
-      }
+  requestHandler.on("Query", function(query){
+    execute(query);
+  });
+  
+  
+  function handle(data) {    
+    try {
+      requestHandler.handle(data);
+    } catch (e) {
+      logger.log(e);
     }
-    client._requestedQuery = queries.join("\n"); 
-    //console.log("We have" + client._requestedQuery);
   }
 
   function execute(request){
@@ -51,7 +45,11 @@ var server = net.createServer(function(client) { //'connection' listener
 
   
   client.on('end', function() {
+    var i = clients.indexOf(client);
+    delete clients[i];
+    clients.splice(i,1);
     logger.log('server disconnected');
+    logger.log("We have " + clients.length + " active clients");
   });
   client.write('hello\r\n');
   client.on('data', handle);
