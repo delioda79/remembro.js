@@ -30,8 +30,11 @@ var server = net.createServer(function(client) { //'connection' listener
       try {
         if (request != undefined) {
           var store = Object.keys(request)[0];
-          if (store != undefined && stores[store] != undefined) {
-                client.write(String(stores[store].execute(request[store])));
+          if (store != undefined) {
+            if (stores[store] == undefined) {
+              stores[store] = new (require('./Store'))("test");
+            }
+            client.write(String(stores[store].execute(request[store])));
           } else {
             logger.log("Store " + store + " doesn't exist");
           }
