@@ -1,6 +1,6 @@
 var net = require('net');
-var testStore = new (require('./Store'))("test");
-var logger = new (require('./Logger'))();
+var testStore = new (require('./src/Store'))("test");
+var logger = new (require('./src/Logger'))();
 var messNUm = 0;
 var stores = new Object();
 stores.test = testStore;
@@ -8,8 +8,14 @@ testStore.on("Log", logger.log);
 var clients = new Array();
 
 var server = net.createServer(function(client) { //'connection' listener
+  client.send = function(query) {
+  var length = (""+query).length;
+  var request = "<" + length + ">" + query;
+  this.write(request);
+}
   clients.push(client);
-  var requestHandler = new (require('./RequestHandler'))();
+  console.log(client.writable);
+  var requestHandler = new (require('./src/RequestHandler'))();
   logger.log('server connected');
   logger.log("We have " + clients.length + " active clients");
   
@@ -32,9 +38,12 @@ var server = net.createServer(function(client) { //'connection' listener
           var store = Object.keys(request)[0];
           if (store != undefined) {
             if (stores[store] == undefined) {
-              stores[store] = new (require('./Store'))("test");
+              stores[store] = new (require('./src/Store'))(store);
             }
-            client.write(String(stores[store].execute(request[store])));
+            var query = String(stores[store].execute(request[store]));
+            //var length = (""+query).length;
+            //var request = "<" + length + ">" + query;
+            client.send(query);                  
           } else {
             logger.log("Store " + store + " doesn't exist");
           }
@@ -54,8 +63,11 @@ var server = net.createServer(function(client) { //'connection' listener
     logger.log('server disconnected');
     logger.log("We have " + clients.length + " active clients");
   });
-  client.write('hello\r\n');
+  client.send('{"msg": "hello"}');
   client.on('data', handle);
+  client.on('error', function(e) {
+      console.log(e);
+  });
 });
 server.listen(7907, function() { //'listening' listener
   logger.log('server bound');
