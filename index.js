@@ -1,3 +1,4 @@
+var Message = require('./src/Message');
 var net = require('net');
 var testStore = new (require('./src/Store'))("test");
 var logger = new (require('./src/Logger'))();
@@ -29,6 +30,7 @@ var server = net.createServer(function(client) { //'connection' listener
       requestHandler.handle(data);
     } catch (e) {
       logger.log(e);
+      logger.log(data.toString());
     }
   }
 
@@ -40,10 +42,8 @@ var server = net.createServer(function(client) { //'connection' listener
             if (stores[store] == undefined) {
               stores[store] = new (require('./src/Store'))(store);
             }
-            var query = String(stores[store].execute(request[store]));
-            //var length = (""+query).length;
-            //var request = "<" + length + ">" + query;
-            client.send(query);                  
+            var query = stores[store].execute(request[store]);
+            client.send((query) ? JSON.stringify(query): new Message(query));                  
           } else {
             logger.log("Store " + store + " doesn't exist");
           }

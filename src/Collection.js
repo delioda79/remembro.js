@@ -1,10 +1,10 @@
 var events = require('events');
 var util = require('util');
 
-function Collection(name) {
+function Collection(name, data) {
   events.EventEmitter.call(this);
   this.name = name;
-  this._data = new Array();
+  this._data = (data != undefined && data instanceof Array) ? data : new Array();
 }
 util.inherits(Collection, events.EventEmitter);
 
@@ -47,13 +47,12 @@ Collection.prototype.find = function(data) {
         }
       }
     }
-    return JSON.stringify(results);
+    return results;
   }
   
 }
 
 Collection.prototype.insert = function(data) {
-  //console.log("Inserting " + JSON.stringify(data));
   this._data.push(data);
   return true;
 }

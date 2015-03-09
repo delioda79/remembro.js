@@ -26,20 +26,20 @@ Store.prototype.execute = function (request) {
               return this._collections[operation].execute(params);
             } else {
               //No method nor collection found
-              this.emit("Log", "The collection " + operation + " doesn't exist");
-              return false;
+              var msg = "The collection " + operation + " doesn't exist";
+              return new Message(msg);
             }
-          } 
+          }
         } else {
-          this.emit("Log","Missing collection");
+          return new Message("Missing collection");
         }
       } else {
-        this.emit("Log","Wrong request");
+        return new Message("Wrong request");
       }
     } catch (e) {
       this.emit("Log","Store execute error: " + e + " - passed parameters: " + JSON.stringify(request) );
     }
-}
+};
 
 Store.prototype.createCollection = function(data) {
   if (data != null && data.name != undefined && typeof data.name == "string" ) {
@@ -91,6 +91,19 @@ Store.prototype.emptyCollection = function(data) {
     this.emit("Log",message);
     return new Message(message);
   }
+}
+
+Store.prototype.compoundQuery = function(specs) {
+    if (specs['source'] == undefined || specs['target'] == undefined) {
+        return new Message("Wrong compound query " + JSON.stringify(specs));
+    }
+    var collection = this.execute(specs['source']);
+    
+    if (collection instanceof Message) {
+        return collection;
+    }
+    var subquery = new Collection("temp", collection);
+    return subquery.execute(specs['target']);
 }
 
 module.exports = Store;
